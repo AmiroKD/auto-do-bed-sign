@@ -39,7 +39,9 @@ def getCode(image):
     result = result.replace('o', '0').replace('l', '1').replace('O', '0').replace('十', '+').replace('三', '')
     # logging.log(logging.INFO, '验证码识别结果：' + result[:-1])
     print('验证码识别结果：' + result[:-1])
-    return eval(result[:-1])
+    ans = eval(result[:-1])
+    print('计算结果：'+ ans)
+    return ans
 
 
 def login(session):
@@ -56,6 +58,7 @@ def login(session):
         if yzm_match:
             yzm_base64 = yzm_match.group(1)
             yzm = getCode(yzm_base64)
+            print('验证码：' + yzm)
 
     psw = ctx.call('G5116', os.getenv('USERNAME'), os.getenv('PASSWORD'), '')
     data = {
@@ -96,6 +99,8 @@ def login(session):
         print("登录失败，响应内容：", login_response)
         send_QQ_email_plain("登录失败，请检查账号、密码或验证码。")
         sys.exit(1)
+    else:
+        print("登录响应：", login_response)
 
     # 判断登录是否需要二次验证
     if 'data' in response.json() and response.json()['data']['code'] == 'TWOVERIFY':
