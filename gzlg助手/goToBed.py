@@ -72,21 +72,31 @@ def login(session):
 
     # 一次登陆
     response = session.post('https://ids.gzist.edu.cn/lyuapServer/v1/tickets', data=data)
-    if 'NOUSER' in response.json():
+    login_response = response.json()
+    if 'NOUSER' in login_response:
         # logging.error('登录异常')
+        print("登录失败，响应内容：", login_response)
         result = '账号不存在'
         send_QQ_email_plain(result)
         sys.exit(1)
-    elif 'PASSERROR' in response.json():
+    elif 'PASSERROR' in login_response:
         # logging.error('登录异常')
+        print("登录失败，响应内容：", login_response)
         result = '密码错误'
         send_QQ_email_plain(result)
         sys.exit(1)
-    elif 'CODEFALSE' in response.json():
+    elif 'CODEFALSE' in login_response:
         # logging.error('登录异常')
+        print("登录失败，响应内容：", login_response)
         result = '验证码错误'
         send_QQ_email_plain(result)
         sys.exit(1)
+    elif 'ticket' in login_response:
+        # 打印完整的响应内容以供调试
+        print("登录失败，响应内容：", login_response)
+        send_QQ_email_plain("登录失败，请检查账号、密码或验证码。")
+        sys.exit(1)
+
     # 判断登录是否需要二次验证
     if 'data' in response.json() and response.json()['data']['code'] == 'TWOVERIFY':
         # 需要二次验证
