@@ -40,7 +40,7 @@ def getCode(image):
     # logging.log(logging.INFO, '验证码识别结果：' + result[:-1])
     print('验证码识别结果：' + result[:-1])
     ans = eval(result[:-1])
-    print('计算结果：'+ ans)
+    print('计算结果：', ans)
     return ans
 
 
@@ -58,7 +58,7 @@ def login(session):
         if yzm_match:
             yzm_base64 = yzm_match.group(1)
             yzm = getCode(yzm_base64)
-            print('验证码：' + yzm)
+            print('验证码：', yzm)
 
     psw = ctx.call('G5116', os.getenv('USERNAME'), os.getenv('PASSWORD'), '')
     data = {
