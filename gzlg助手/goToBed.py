@@ -94,11 +94,6 @@ def login(session):
         result = '验证码错误'
         send_QQ_email_plain(result)
         sys.exit(1)
-    elif 'ticket' in login_response:
-        # 打印完整的响应内容以供调试
-        print("登录失败，响应内容：", login_response)
-        send_QQ_email_plain("登录失败，请检查账号、密码或验证码。")
-        sys.exit(1)
     else:
         print("登录响应：", login_response)
 
@@ -116,8 +111,9 @@ def login(session):
             'loginType': '',
             'isCommonIP': '',
         }
-        session.post('https://ids.gzist.edu.cn/lyuapServer/login/twoVertify', headers=session.headers,
+        res = session.post('https://ids.gzist.edu.cn/lyuapServer/login/twoVertify', headers=session.headers,
                      json=json_data)
+        print("二次验证响应：", res.json())
         # 二次登陆
         response = session.post('https://ids.gzist.edu.cn/lyuapServer/v1/tickets', data=data)
         return response.json()['ticket']
