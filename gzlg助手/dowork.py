@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # @Time : 27/4/2024 下午9:55
 # @Author : G5116
-import re, execjs, json, requests, os, sys
+import re, execjs, json, requests, os, sys, socket, time, random
+import dns.resolver
 
 # 获取当前文件的目录
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,6 +16,43 @@ from emailSender import send_QQ_email_plain
 with open('gzlg助手/g5116.js', 'r', encoding='utf-8') as f:
     js = f.read()
 ctx = execjs.compile(js)
+
+# ---- 国内 DNS 解析配置 ----
+TARGET_DOMAINS = {'ids.gzist.edu.cn', 'xsfw.gzist.edu.cn'}
+CHINA_DNS_SERVERS = ['223.5.5.5', '119.29.29.29']
+_dns_cache = {}
+_original_getaddrinfo = socket.getaddrinfo
+
+
+def _resolve_with_china_dns(hostname):
+    """使用国内 DNS 服务器解析域名，带缓存"""
+    if hostname in _dns_cache:
+        return _dns_cache[hostname]
+    for dns_server in CHINA_DNS_SERVERS:
+        try:
+            resolver = dns.resolver.Resolver()
+            resolver.nameservers = [dns_server]
+            resolver.lifetime = 5
+            answers = resolver.resolve(hostname, 'A')
+            ip = str(answers[0])
+            _dns_cache[hostname] = ip
+            print(f'DNS 解析: {hostname} -> {ip} (via {dns_server})')
+            return ip
+        except Exception as e:
+            print(f'DNS 解析 {hostname} 失败 (via {dns_server}): {e}')
+            continue
+    raise RuntimeError(f'所有国内 DNS 服务器均无法解析 {hostname}')
+
+
+def _custom_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """自定义 getaddrinfo，对目标域名使用国内 DNS 解析"""
+    if host in TARGET_DOMAINS:
+        ip = _resolve_with_china_dns(host)
+        return _original_getaddrinfo(ip, port, family, type, proto, flags)
+    return _original_getaddrinfo(host, port, family, type, proto, flags)
+
+
+socket.getaddrinfo = _custom_getaddrinfo
 
 
 def init():
@@ -139,4 +177,20 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    max_attempts = 5
+    attempt = 0
+    while attempt < max_attempts:
+        try:
+            main()
+            print("执行成功！")
+            break
+        except Exception as e:
+            attempt += 1
+            print(f"尝试 {attempt} 次失败，错误信息：{e}")
+            if attempt == max_attempts:
+                send_QQ_email_plain(f'连续' + str(max_attempts) + '次执行失败！请手动签到！')
+                print("已达最大尝试次数，程序结束。")
+            else:
+                wait = min(5 * (2 ** (attempt - 1)), 60) + random.uniform(0, 3)
+                print(f"等待 {wait:.1f} 秒后重试...")
+                time.sleep(wait)
