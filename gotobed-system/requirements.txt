@@ -1,0 +1,11 @@
+flask>=3.0
+flask-login>=0.6
+flask-sqlalchemy>=3.1
+apscheduler>=3.10
+requests>=2.31
+PyExecJS>=1.5
+ddddocr>=1.4
+dnspython>=2.4
+pytz>=2024
+cryptography>=42.0
+gunicorn>=22.0
