@@ -1,0 +1,123 @@
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask_login import login_required
+
+from ..models import db, User
+from ..crypto import encrypt_password
+# from ..scheduler import add_user_job, remove_user_job, update_user_job  # TODO: 待实现 (Task 11)
+
+
+# --- 临时桩函数，Task 11 实现后替换为真实导入 ---
+def add_user_job(user):
+    pass
+
+
+def remove_user_job(user_id):
+    pass
+
+
+def update_user_job(user):
+    pass
+
+
+users_bp = Blueprint('users', __name__)
+
+CRON_PRESETS = {
+    '10 12 * * *': '每天 20:10（北京时间）',
+    '0 14 * * *': '每天 22:00（北京时间）',
+    '30 13 * * *': '每天 21:30（北京时间）',
+    '0 13 * * *': '每天 21:00（北京时间）',
+}
+
+
+@users_bp.route('/')
+@login_required
+def user_list():
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('users/list.html', users=users)
+
+
+@users_bp.route('/users/new', methods=['GET', 'POST'])
+@login_required
+def user_new():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        if not username or not password:
+            flash('账号和密码为必填项', 'danger')
+            return render_template('users/form.html', presets=CRON_PRESETS, user=None)
+
+        user = User(
+            username=username,
+            password_encrypted=encrypt_password(password),
+            principal=request.form.get('principal', '').strip() or None,
+            credential=request.form.get('credential', '').strip() or None,
+            email=request.form.get('email', '').strip() or None,
+            cron_expr=request.form.get('cron_expr', '10 12 * * *').strip(),
+            enabled='enabled' in request.form,
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        if user.enabled:
+            add_user_job(user)
+
+        flash(f'用户 {username} 添加成功', 'success')
+        return redirect(url_for('users.user_list'))
+
+    return render_template('users/form.html', presets=CRON_PRESETS, user=None)
+
+
+@users_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def user_edit(user_id):
+    user = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        if not username:
+            flash('账号为必填项', 'danger')
+            return render_template('users/form.html', presets=CRON_PRESETS, user=user)
+
+        user.username = username
+        if password:
+            user.password_encrypted = encrypt_password(password)
+        user.principal = request.form.get('principal', '').strip() or None
+        user.credential = request.form.get('credential', '').strip() or None
+        user.email = request.form.get('email', '').strip() or None
+        user.cron_expr = request.form.get('cron_expr', '10 12 * * *').strip()
+        user.enabled = 'enabled' in request.form
+        db.session.commit()
+
+        update_user_job(user)
+
+        flash(f'用户 {username} 更新成功', 'success')
+        return redirect(url_for('users.user_list'))
+
+    return render_template('users/form.html', presets=CRON_PRESETS, user=user)
+
+
+@users_bp.route('/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+def user_delete(user_id):
+    user = User.query.get_or_404(user_id)
+    username = user.username
+    remove_user_job(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'用户 {username} 已删除', 'success')
+    return redirect(url_for('users.user_list'))
+
+
+@users_bp.route('/users/<int:user_id>/toggle', methods=['POST'])
+@login_required
+def user_toggle(user_id):
+    user = User.query.get_or_404(user_id)
+    user.enabled = not user.enabled
+    db.session.commit()
+
+    update_user_job(user)
+
+    status = '启用' if user.enabled else '禁用'
+    flash(f'用户 {user.username} 已{status}', 'success')
+    return redirect(url_for('users.user_list'))
