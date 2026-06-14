@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}登录 - 查寝管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title text-center mb-4">查寝管理系统</h4>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="password" class="form-label">管理员密码</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                               required autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

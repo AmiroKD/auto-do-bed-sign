@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑' if user else '新增' }}用户 - 查寝管理系统{% endblock %}
+
+{% block content %}
+<h4>{{ '编辑' if user else '新增' }}用户</h4>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="username" class="form-label">账号 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="username" name="username"
+                       value="{{ user.username if user else '' }}" required>
+                <div class="form-text">学工平台用户名</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    密码 {% if not user %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                <input type="password" class="form-control" id="password" name="password"
+                       {{ 'required' if not user else '' }}>
+                {% if user %}
+                <div class="form-text">留空表示不修改</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="principal" class="form-label">密保问题 <span class="text-muted">(选填)</span></label>
+                <input type="text" class="form-control" id="principal" name="principal"
+                       value="{{ user.principal if user and user.principal else '' }}">
+                <div class="form-text">二次验证用，不触发二次验证时无需填写</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="credential" class="form-label">密保答案 <span class="text-muted">(选填)</span></label>
+                <input type="text" class="form-control" id="credential" name="credential"
+                       value="{{ user.credential if user and user.credential else '' }}">
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">通知邮箱 <span class="text-muted">(选填)</span></label>
+                <input type="email" class="form-control" id="email" name="email"
+                       value="{{ user.email if user and user.email else '' }}">
+                <div class="form-text">查寝结果会发送到此邮箱</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="cron_expr" class="form-label">Cron 表达式 <span class="text-danger">*</span></label>
+                <select class="form-select mb-2" id="cron_preset" onchange="applyPreset()">
+                    <option value="">-- 选择预设 --</option>
+                    {% for expr, desc in presets.items() %}
+                    <option value="{{ expr }}"
+                        {% if user and user.cron_expr == expr %}selected{% endif %}>
+                        {{ desc }} ({{ expr }})
+                    </option>
+                    {% endfor %}
+                    <option value="custom">自定义</option>
+                </select>
+                <input type="text" class="form-control" id="cron_expr" name="cron_expr"
+                       value="{{ user.cron_expr if user else '10 12 * * *' }}" required
+                       placeholder="分 时 日 月 周">
+                <div class="form-text">格式：分 时 日 月 周（北京时间，如 10 12 * * * = 每天20:10）</div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="enabled" name="enabled"
+                       {{ 'checked' if not user or user.enabled else '' }}>
+                <label class="form-check-label" for="enabled">启用</label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <a href="{{ url_for('users.user_list') }}" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function applyPreset() {
+    const select = document.getElementById('cron_preset');
+    const input = document.getElementById('cron_expr');
+    if (select.value && select.value !== 'custom') {
+        input.value = select.value;
+    }
+}
+</script>
+{% endblock %}

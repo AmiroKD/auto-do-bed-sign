@@ -1,0 +1,15 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+.badge {
+    font-size: 0.85em;
+}
