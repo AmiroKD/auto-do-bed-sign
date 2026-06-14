@@ -3,20 +3,7 @@ from flask_login import login_required
 
 from ..models import db, User
 from ..crypto import encrypt_password
-# from ..scheduler import add_user_job, remove_user_job, update_user_job  # TODO: 待实现 (Task 11)
-
-
-# --- 临时桩函数，Task 11 实现后替换为真实导入 ---
-def add_user_job(user):
-    pass
-
-
-def remove_user_job(user_id):
-    pass
-
-
-def update_user_job(user):
-    pass
+from ..scheduler import add_user_job, remove_user_job, update_user_job
 
 
 users_bp = Blueprint('users', __name__)

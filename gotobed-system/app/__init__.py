@@ -36,9 +36,9 @@ def create_app():
     # from .routes import register_blueprints
     # register_blueprints(app)
 
-    # TODO(Task 11): 初始化调度器 - 取消下方注释
-    # from .scheduler import init_scheduler
-    # init_scheduler(app)
+    # 初始化调度器
+    from .scheduler import init_scheduler
+    init_scheduler(app)
 
     # 创建数据库表
     with app.app_context():
