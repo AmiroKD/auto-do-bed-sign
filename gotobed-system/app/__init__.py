@@ -32,9 +32,9 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
 
-    # TODO(Task 6): 注册蓝图 - 取消下方注释
-    # from .routes import register_blueprints
-    # register_blueprints(app)
+    # 注册蓝图
+    from .routes import register_blueprints
+    register_blueprints(app)
 
     # 初始化调度器
     from .scheduler import init_scheduler
