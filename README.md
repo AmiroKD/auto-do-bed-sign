@@ -72,3 +72,37 @@ CREDENTIAL    # 密保答案
 ### 效果图
 ![img.png](gzlg助手/img/img5.png)  
 ![img.png](gzlg助手/img/img6.png)
+
+---
+
+## 🖥️ 查寝管理系统（自托管版）
+
+> 除了 GitHub Actions，本项目还提供了 **Web 管理系统**，可部署到自己的服务器上管理多个用户的查寝任务。
+
+**功能亮点：**
+- Web 管理后台，支持多用户增删改查
+- 每个用户可独立选择多个打卡时间（9:10 / 9:30 / 10:10 / 10:30）
+- 支持二次验证（密保问题/答案选填）
+- 自动重试 + 邮件通知
+- 查寝结果日志查看
+- Docker 一键部署
+
+**快速开始：**
+
+```bash
+# 克隆项目
+git clone <repo-url>
+cd auto-do-bed-sign
+
+# 配置环境变量
+cp gotobed-system/.env.example .env
+# 编辑 .env 填入管理员密码等配置
+
+# Docker 启动
+cd gotobed-system
+docker-compose up -d --build
+
+# 访问 http://your-server:5000
+```
+
+> 📖 详细部署文档请参考 [gotobed-system/README.md](gotobed-system/README.md)
