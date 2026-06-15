@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑' if user else '新增' }}用户 - 查寝管理系统{% endblock %}
+
+{% block content %}
+<h4>{{ '编辑' if user else '新增' }}用户</h4>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="username" class="form-label">账号 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="username" name="username"
+                       value="{{ user.username if user else '' }}" required>
+                <div class="form-text">学工平台用户名</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    密码 {% if not user %}<span class="text-danger">*</span>{% endif %}
+                </label>
+                <input type="password" class="form-control" id="password" name="password"
+                       {{ 'required' if not user else '' }}>
+                {% if user %}
+                <div class="form-text">留空表示不修改</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="principal" class="form-label">密保问题 <span class="text-muted">(选填)</span></label>
+                <input type="text" class="form-control" id="principal" name="principal"
+                       value="{{ user.principal if user and user.principal else '' }}">
+                <div class="form-text">二次验证用，不触发二次验证时无需填写</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="credential" class="form-label">密保答案 <span class="text-muted">(选填)</span></label>
+                <input type="text" class="form-control" id="credential" name="credential"
+                       value="{{ user.credential if user and user.credential else '' }}">
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">通知邮箱 <span class="text-muted">(选填)</span></label>
+                <input type="email" class="form-control" id="email" name="email"
+                       value="{{ user.email if user and user.email else '' }}">
+                <div class="form-text">查寝结果会发送到此邮箱</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">打卡时间 <span class="text-danger">*</span></label>
+                <div class="form-text mb-2">可选择多个时间，系统会在每个选定时间自动查寝（北京时间）</div>
+                {% for expr, desc in presets.items() %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="cron_times"
+                           id="cron_{{ loop.index }}" value="{{ expr }}"
+                           {% if not user or expr in user.get_cron_times() %}checked{% endif %}>
+                    <label class="form-check-label" for="cron_{{ loop.index }}">
+                        {{ desc }} <code>{{ expr }}</code>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="enabled" name="enabled"
+                       {{ 'checked' if not user or user.enabled else '' }}>
+                <label class="form-check-label" for="enabled">启用</label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <a href="{{ url_for('users.user_list') }}" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
