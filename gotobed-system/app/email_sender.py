@@ -1,18 +1,19 @@
 import smtplib
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from email.mime.text import MIMEText
 
 from flask import current_app
 
-# 北京时间 UTC+8
-_BJ_TZ = timezone(timedelta(hours=8))
+# 北京时间
+BJT = ZoneInfo('Asia/Shanghai')
 
 # 中文星期映射
 _WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
 
 def get_beijing_time():
-    now = datetime.now(_BJ_TZ)
+    now = datetime.now(BJT)
     weekday = _WEEKDAYS[now.weekday()]
     return now.strftime(f'%Y-%m-%d {weekday} %H:%M')
 

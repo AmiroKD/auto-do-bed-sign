@@ -1,11 +1,12 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import json
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-# 北京时间 UTC+8
-_BJ_TZ = timezone(timedelta(hours=8))
+# 北京时间
+BJT = ZoneInfo('Asia/Shanghai')
 
 
 class User(db.Model):
@@ -19,9 +20,9 @@ class User(db.Model):
     email = db.Column(db.Text, nullable=True)
     cron_times = db.Column(db.Text, nullable=False, default='["10 21 * * *"]')
     enabled = db.Column(db.Boolean, nullable=False, default=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(_BJ_TZ))
-    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(_BJ_TZ),
-                           onupdate=lambda: datetime.now(_BJ_TZ))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(BJT))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(BJT),
+                           onupdate=lambda: datetime.now(BJT))
 
     logs = db.relationship('Log', backref='user', lazy='dynamic', cascade='all, delete-orphan')
 
@@ -51,7 +52,7 @@ class Log(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     status = db.Column(db.Text, nullable=False)  # 'success' / 'failure'
     message = db.Column(db.Text, nullable=False)
-    executed_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(_BJ_TZ))
+    executed_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(BJT))
 
     def __repr__(self):
         return f'<Log {self.id} {self.status}>'

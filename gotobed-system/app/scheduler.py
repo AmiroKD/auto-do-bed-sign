@@ -1,5 +1,6 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -9,7 +10,7 @@ scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
 _jobs = {}  # user_id -> [job_id1, job_id2, ...]  一个用户可有多个定时任务
 _app = None  # 保存 app 引用
 
-_BJ_TZ = timezone(timedelta(hours=8))
+BJT = ZoneInfo('Asia/Shanghai')
 
 
 def _execute_gotobed(user_id: int):
@@ -57,7 +58,7 @@ def _cleanup_old_logs():
         return
 
     with _app.app_context():
-        cutoff = datetime.now(_BJ_TZ).replace(tzinfo=None) - timedelta(days=5)
+        cutoff = datetime.now(BJT).replace(tzinfo=None) - timedelta(days=5)
         count = Log.query.filter(Log.executed_at < cutoff).delete()
         db.session.commit()
         if count > 0:

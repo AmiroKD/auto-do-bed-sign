@@ -8,7 +8,8 @@ import time
 import random
 import os
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import execjs
 import requests
@@ -26,8 +27,8 @@ _original_getaddrinfo = socket.getaddrinfo
 # ---- 请求超时（秒） ----
 REQUEST_TIMEOUT = 30
 
-# 北京时间 UTC+8
-_BJ_TZ = timezone(timedelta(hours=8))
+# 北京时间
+BJT = ZoneInfo('Asia/Shanghai')
 
 # ---- OCR 实例复用 ----
 _ocr = ddddocr.DdddOcr(show_ad=False)
@@ -215,7 +216,7 @@ def _do_gotobed(session, username):
     }
 
     url = 'https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/modules/studentCheckController/uniFormSignUp.do'
-    if int(username[:4]) >= datetime.now(_BJ_TZ).year:
+    if int(username[:4]) >= datetime.now(BJT).year:
         logger.info('定位: 惠州校区')
         response = session.post(url, cookies=cookies, data=data_hz, timeout=REQUEST_TIMEOUT)
     else:
