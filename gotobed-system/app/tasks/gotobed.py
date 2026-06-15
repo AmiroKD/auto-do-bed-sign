@@ -7,6 +7,7 @@ import socket
 import time
 import random
 import os
+import logging
 from datetime import datetime
 
 import execjs
@@ -14,11 +15,19 @@ import requests
 import ddddocr
 import dns.resolver
 
+logger = logging.getLogger(__name__)
+
 # ---- 国内 DNS 解析配置 ----
 TARGET_DOMAINS = {'ids.gzist.edu.cn', 'xsfw.gzist.edu.cn'}
 CHINA_DNS_SERVERS = ['223.5.5.5', '119.29.29.29']
 _dns_cache = {}
 _original_getaddrinfo = socket.getaddrinfo
+
+# ---- 请求超时（秒） ----
+REQUEST_TIMEOUT = 30
+
+# ---- OCR 实例复用 ----
+_ocr = ddddocr.DdddOcr(show_ad=False)
 
 
 def _resolve_with_china_dns(hostname):
@@ -33,10 +42,10 @@ def _resolve_with_china_dns(hostname):
             answers = resolver.resolve(hostname, 'A')
             ip = str(answers[0])
             _dns_cache[hostname] = ip
-            print(f'DNS 解析: {hostname} -> {ip} (via {dns_server})')
+            logger.info(f'DNS 解析: {hostname} -> {ip} (via {dns_server})')
             return ip
         except Exception as e:
-            print(f'DNS 解析 {hostname} 失败 (via {dns_server}): {e}')
+            logger.warning(f'DNS 解析 {hostname} 失败 (via {dns_server}): {e}')
             continue
     raise RuntimeError(f'所有国内 DNS 服务器均无法解析 {hostname}')
 
@@ -70,15 +79,27 @@ def _init_session():
     return session
 
 
+def _safe_eval_math(expr: str) -> int:
+    """安全计算简单数学表达式（仅允许数字和 +-*/ 运算符）"""
+    expr = expr.strip()
+    if not re.match(r'^[\d\s\+\-\*\/\(\)]+$', expr):
+        raise ValueError(f'不安全的表达式: {expr}')
+    # 使用 compile + eval 限制为数学表达式（无内置函数可用）
+    code = compile(expr, '<expr>', 'eval')
+    # 禁止访问任何名称（只允许数字和运算符）
+    return int(eval(code, {'__builtins__': {}}, {}))
+
+
 def _get_code(image_base64):
-    """验证码 OCR 识别"""
-    ocr = ddddocr.DdddOcr(show_ad=False)
+    """验证码 OCR 识别（复用全局 OCR 实例）"""
     image_bytes = base64.b64decode(image_base64)
-    result = ocr.classification(image_bytes)
+    result = _ocr.classification(image_bytes)
+    # 替换常见 OCR 误识别
     result = result.replace('o', '0').replace('l', '1').replace('O', '0').replace('十', '+').replace('三', '')
-    print('验证码识别结果：' + result[:-1])
-    ans = eval(result[:-1])
-    print('计算结果：', ans)
+    expr = result[:-1]  # 去掉末尾的 = 或 ?
+    logger.info(f'验证码识别: {result} -> 表达式: {expr}')
+    ans = _safe_eval_math(expr)
+    logger.info(f'计算结果: {ans}')
     return ans
 
 
@@ -86,7 +107,8 @@ def _login(session, username, password, principal=None, credential=None):
     """登录学工平台，返回 ticket"""
     params = {'uid': ''}
     yzm_url = 'https://ids.gzist.edu.cn/lyuapServer/kaptcha'
-    response = session.get(yzm_url, params=params)
+    response = session.get(yzm_url, params=params, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
     uid = response.json()['uid']
 
     yzm = None
@@ -95,7 +117,7 @@ def _login(session, username, password, principal=None, credential=None):
         if yzm_match:
             yzm_base64 = yzm_match.group(1)
             yzm = _get_code(yzm_base64)
-            print('验证码：', yzm)
+            logger.info(f'验证码: {yzm}')
 
     psw = _ctx.call('G5116', username, password, '')
     data = {
@@ -109,7 +131,9 @@ def _login(session, username, password, principal=None, credential=None):
     if yzm is not None:
         data['code'] = str(yzm)
 
-    response = session.post('https://ids.gzist.edu.cn/lyuapServer/v1/tickets', data=data)
+    response = session.post('https://ids.gzist.edu.cn/lyuapServer/v1/tickets',
+                            data=data, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
     login_response = response.json()
 
     if 'NOUSER' in login_response:
@@ -119,7 +143,7 @@ def _login(session, username, password, principal=None, credential=None):
     elif 'CODEFALSE' in login_response:
         raise RuntimeError('验证码错误')
 
-    print("登录响应：", login_response)
+    logger.info(f'登录响应: {login_response}')
 
     # 二次验证
     if 'data' in response.json() and response.json()['data']['code'] == 'TWOVERIFY':
@@ -137,9 +161,13 @@ def _login(session, username, password, principal=None, credential=None):
             'loginType': '',
             'isCommonIP': '',
         }
-        session.post('https://ids.gzist.edu.cn/lyuapServer/login/twoVertify',
-                     headers=session.headers, json=json_data)
-        response = session.post('https://ids.gzist.edu.cn/lyuapServer/v1/tickets', data=data)
+        res = session.post('https://ids.gzist.edu.cn/lyuapServer/login/twoVertify',
+                           headers=session.headers, json=json_data, timeout=REQUEST_TIMEOUT)
+        res.raise_for_status()
+        logger.info(f'二次验证响应: {res.json()}')
+        response = session.post('https://ids.gzist.edu.cn/lyuapServer/v1/tickets',
+                                data=data, timeout=REQUEST_TIMEOUT)
+        response.raise_for_status()
         return response.json()['ticket']
 
     return response.json()['ticket']
@@ -150,7 +178,8 @@ def _update_cookie(session, ticket):
     params = {'ticket': ticket}
     response = session.get(
         'https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/*default/index.do',
-        params=params)
+        params=params, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
     session.cookies = response.cookies
 
 
@@ -161,9 +190,9 @@ def _do_gotobed(session, username):
     }
     response = session.post(
         'https://xsfw.gzist.edu.cn/xsfw/sys/swpubapp/MobileCommon/getSelRoleConfig.do',
-        cookies=session.cookies,
-        data=data,
-    )
+        cookies=session.cookies, data=data, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
+
     _WEU = response.cookies.get('_WEU')
     cookies = {'_WEU': _WEU}
 
@@ -180,26 +209,24 @@ def _do_gotobed(session, username):
                 '"QDPL":"2"}',
     }
 
+    url = 'https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/modules/studentCheckController/uniFormSignUp.do'
     if int(username[:4]) >= datetime.now().year:
-        print('定位hz')
-        response = session.post(
-            'https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/modules/studentCheckController/uniFormSignUp.do',
-            cookies=cookies, data=data_hz)
+        logger.info('定位: 惠州校区')
+        response = session.post(url, cookies=cookies, data=data_hz, timeout=REQUEST_TIMEOUT)
     else:
-        print('定位by')
-        response = session.post(
-            'https://xsfw.gzist.edu.cn/xsfw/sys/swmzncqapp/modules/studentCheckController/uniFormSignUp.do',
-            cookies=cookies, data=data_by)
+        logger.info('定位: 白云校区')
+        response = session.post(url, cookies=cookies, data=data_by, timeout=REQUEST_TIMEOUT)
+    response.raise_for_status()
 
     try:
         result = response.json()['msg']
-        print('签到结果: ' + result)
+        logger.info(f'签到结果: {result}')
         return result
     except json.JSONDecodeError:
-        print(f'签到异常: JSON解析错误，响应: {response.text}')
+        logger.error(f'签到异常: JSON解析错误，响应: {response.text[:200]}')
         return '查寝失败'
     except Exception as e:
-        print(f'签到异常: {e}')
+        logger.error(f'签到异常: {e}')
         return '查寝失败'
 
 
@@ -230,13 +257,14 @@ def run_gotobed(username: str, password: str,
 
         except Exception as e:
             last_error = str(e)
-            print(f"尝试 {attempt} 次失败，错误信息：{e}")
+            logger.warning(f'尝试 {attempt} 次失败: {e}')
             if attempt < max_attempts:
                 wait = min(5 * (2 ** (attempt - 1)), 60) + random.uniform(0, 3)
-                print(f"等待 {wait:.1f} 秒后重试...")
+                logger.info(f'等待 {wait:.1f} 秒后重试...')
                 time.sleep(wait)
 
     error_msg = f'连续{max_attempts}次执行失败: {last_error}'
+    logger.error(error_msg)
     if email:
         send_gotobed_result(error_msg, email)
     return {'status': 'failure', 'message': error_msg}
