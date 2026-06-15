@@ -14,7 +14,7 @@ class User(db.Model):
     principal = db.Column(db.Text, nullable=True)
     credential = db.Column(db.Text, nullable=True)
     email = db.Column(db.Text, nullable=True)
-    cron_times = db.Column(db.Text, nullable=False, default='["10 9 * * *"]')
+    cron_times = db.Column(db.Text, nullable=False, default='["10 21 * * *"]')
     enabled = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc),
@@ -27,7 +27,7 @@ class User(db.Model):
         try:
             return json.loads(self.cron_times)
         except (json.JSONDecodeError, TypeError):
-            return ['10 9 * * *']
+            return ['10 21 * * *']
 
     def set_cron_times(self, times: list):
         """设置 cron 时间列表"""
