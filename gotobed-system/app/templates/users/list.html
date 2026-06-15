@@ -52,6 +52,11 @@
                 <td>
                     <a href="{{ url_for('users.user_edit', user_id=user.id) }}"
                        class="btn btn-sm btn-outline-primary">编辑</a>
+                    <form method="POST" action="{{ url_for('users.user_test', user_id=user.id) }}"
+                          style="display:inline"
+                          onsubmit="return confirm('立即测试 {{ user.username }} 的查寝？')">
+                        <button class="btn btn-sm btn-outline-info">测试</button>
+                    </form>
                     <form method="POST" action="{{ url_for('users.user_toggle', user_id=user.id) }}"
                           style="display:inline">
                         {% if user.enabled %}

@@ -118,3 +118,33 @@ def user_toggle(user_id):
     status = '启用' if user.enabled else '禁用'
     flash(f'用户 {user.username} 已{status}', 'success')
     return redirect(url_for('users.user_list'))
+
+
+@users_bp.route('/users/<int:user_id>/test', methods=['POST'])
+@login_required
+def user_test(user_id):
+    """立即执行查寝测试，返回结果"""
+    user = User.query.get_or_404(user_id)
+    from ..crypto import decrypt_password
+    from ..tasks.gotobed import run_gotobed
+
+    password = decrypt_password(user.password_encrypted)
+    result = run_gotobed(
+        username=user.username,
+        password=password,
+        principal=user.principal,
+        credential=user.credential,
+    )
+
+    if result['status'] == 'success':
+        flash(f'✅ {user.username} 测试成功: {result["message"]}', 'success')
+    else:
+        flash(f'❌ {user.username} 测试失败: {result["message"]}', 'danger')
+
+    # 记录日志
+    from ..models import Log
+    log = Log(user_id=user.id, status=result['status'], message=result['message'])
+    db.session.add(log)
+    db.session.commit()
+
+    return redirect(url_for('users.user_list'))
