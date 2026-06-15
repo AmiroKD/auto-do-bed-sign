@@ -46,21 +46,18 @@
             </div>
 
             <div class="mb-3">
-                <label for="cron_expr" class="form-label">Cron 表达式 <span class="text-danger">*</span></label>
-                <select class="form-select mb-2" id="cron_preset" onchange="applyPreset()">
-                    <option value="">-- 选择预设 --</option>
-                    {% for expr, desc in presets.items() %}
-                    <option value="{{ expr }}"
-                        {% if user and user.cron_expr == expr %}selected{% endif %}>
-                        {{ desc }} ({{ expr }})
-                    </option>
-                    {% endfor %}
-                    <option value="custom">自定义</option>
-                </select>
-                <input type="text" class="form-control" id="cron_expr" name="cron_expr"
-                       value="{{ user.cron_expr if user else '10 12 * * *' }}" required
-                       placeholder="分 时 日 月 周">
-                <div class="form-text">格式：分 时 日 月 周（北京时间，如 10 12 * * * = 每天20:10）</div>
+                <label class="form-label">打卡时间 <span class="text-danger">*</span></label>
+                <div class="form-text mb-2">可选择多个时间，系统会在每个选定时间自动查寝（北京时间）</div>
+                {% for expr, desc in presets.items() %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="cron_times"
+                           id="cron_{{ loop.index }}" value="{{ expr }}"
+                           {% if not user or expr in user.get_cron_times() %}checked{% endif %}>
+                    <label class="form-check-label" for="cron_{{ loop.index }}">
+                        {{ desc }} <code>{{ expr }}</code>
+                    </label>
+                </div>
+                {% endfor %}
             </div>
 
             <div class="mb-3 form-check">
@@ -76,16 +73,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-function applyPreset() {
-    const select = document.getElementById('cron_preset');
-    const input = document.getElementById('cron_expr');
-    if (select.value && select.value !== 'custom') {
-        input.value = select.value;
-    }
-}
-</script>
 {% endblock %}

@@ -5,7 +5,7 @@ from apscheduler.triggers.cron import CronTrigger
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
-_jobs = {}  # user_id -> job_id
+_jobs = {}  # user_id -> [job_id1, job_id2, ...]  一个用户可有多个定时任务
 _app = None  # 保存 app 引用
 
 
@@ -46,31 +46,34 @@ def _execute_gotobed(user_id: int):
 
 
 def add_user_job(user):
-    """为用户添加调度任务"""
-    job_id = f'gotobed_{user.id}'
-    try:
-        trigger = CronTrigger.from_crontab(user.cron_expr, timezone='Asia/Shanghai')
-        scheduler.add_job(
-            _execute_gotobed,
-            trigger=trigger,
-            args=[user.id],
-            id=job_id,
-            replace_existing=True,
-            max_instances=1,
-        )
-        _jobs[user.id] = job_id
-        logger.info(f'已添加调度: 用户 {user.username}, cron={user.cron_expr}')
-    except Exception as e:
-        logger.error(f'添加调度失败: 用户 {user.username}, 错误: {e}')
+    """为用户添加调度任务（支持多个时间）"""
+    job_ids = []
+    for idx, cron_expr in enumerate(user.get_cron_times()):
+        job_id = f'gotobed_{user.id}_{idx}'
+        try:
+            trigger = CronTrigger.from_crontab(cron_expr, timezone='Asia/Shanghai')
+            scheduler.add_job(
+                _execute_gotobed,
+                trigger=trigger,
+                args=[user.id],
+                id=job_id,
+                replace_existing=True,
+                max_instances=1,
+            )
+            job_ids.append(job_id)
+            logger.info(f'已添加调度: 用户 {user.username}, cron={cron_expr}')
+        except Exception as e:
+            logger.error(f'添加调度失败: 用户 {user.username}, cron={cron_expr}, 错误: {e}')
+    _jobs[user.id] = job_ids
 
 
 def remove_user_job(user_id: int):
-    """移除用户的调度任务"""
-    job_id = _jobs.pop(user_id, None)
-    if job_id:
+    """移除用户的所有调度任务"""
+    job_ids = _jobs.pop(user_id, [])
+    for job_id in job_ids:
         try:
             scheduler.remove_job(job_id)
-            logger.info(f'已移除调度: 用户ID {user_id}')
+            logger.info(f'已移除调度: {job_id}')
         except Exception:
             pass
 

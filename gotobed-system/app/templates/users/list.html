@@ -14,7 +14,7 @@
             <tr>
                 <th>账号</th>
                 <th>邮箱</th>
-                <th>Cron 表达式</th>
+                <th>打卡时间</th>
                 <th>状态</th>
                 <th>最近日志</th>
                 <th>操作</th>
@@ -25,7 +25,11 @@
             <tr>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email or '-' }}</td>
-                <td><code>{{ user.cron_expr }}</code></td>
+                <td>
+                    {% for t in user.get_cron_times() %}
+                    <code class="d-inline-block me-1">{{ t }}</code>
+                    {% endfor %}
+                </td>
                 <td>
                     {% if user.enabled %}
                     <span class="badge bg-success">启用</span>
@@ -34,7 +38,7 @@
                     {% endif %}
                 </td>
                 <td>
-                    {% set last_log = user.logs.order_by('-executed_at').first() %}
+                    {% set last_log = user.last_log() %}
                     {% if last_log %}
                         {% if last_log.status == 'success' %}
                         <span class="text-success">✅ {{ last_log.message[:20] }}</span>

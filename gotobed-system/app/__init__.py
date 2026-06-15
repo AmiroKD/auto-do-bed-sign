@@ -36,12 +36,12 @@ def create_app():
     from .routes import register_blueprints
     register_blueprints(app)
 
-    # 初始化调度器
-    from .scheduler import init_scheduler
-    init_scheduler(app)
-
     # 创建数据库表
     with app.app_context():
         db.create_all()
+
+    # 初始化调度器（需在建表之后）
+    from .scheduler import init_scheduler
+    init_scheduler(app)
 
     return app

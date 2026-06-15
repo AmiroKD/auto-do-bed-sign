@@ -9,10 +9,10 @@ from ..scheduler import add_user_job, remove_user_job, update_user_job
 users_bp = Blueprint('users', __name__)
 
 CRON_PRESETS = {
-    '10 12 * * *': '每天 20:10（北京时间）',
-    '0 14 * * *': '每天 22:00（北京时间）',
-    '30 13 * * *': '每天 21:30（北京时间）',
-    '0 13 * * *': '每天 21:00（北京时间）',
+    '10 9 * * *': '每天 09:10（北京时间）',
+    '30 9 * * *': '每天 09:30（北京时间）',
+    '10 10 * * *': '每天 10:10（北京时间）',
+    '30 10 * * *': '每天 10:30（北京时间）',
 }
 
 
@@ -39,9 +39,9 @@ def user_new():
             principal=request.form.get('principal', '').strip() or None,
             credential=request.form.get('credential', '').strip() or None,
             email=request.form.get('email', '').strip() or None,
-            cron_expr=request.form.get('cron_expr', '10 12 * * *').strip(),
             enabled='enabled' in request.form,
         )
+        user.set_cron_times(request.form.getlist('cron_times'))
         db.session.add(user)
         db.session.commit()
 
@@ -72,7 +72,7 @@ def user_edit(user_id):
         user.principal = request.form.get('principal', '').strip() or None
         user.credential = request.form.get('credential', '').strip() or None
         user.email = request.form.get('email', '').strip() or None
-        user.cron_expr = request.form.get('cron_expr', '10 12 * * *').strip()
+        user.set_cron_times(request.form.getlist('cron_times'))
         user.enabled = 'enabled' in request.form
         db.session.commit()
 
