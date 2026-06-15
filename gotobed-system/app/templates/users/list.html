@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - 查寝管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+        <h2>用户管理</h2>
+        <p>管理查寝账号和定时任务</p>
+    </div>
+    <a href="{{ url_for('users.user_new') }}" class="btn btn-accent">+ 新增用户</a>
+</div>
+
+<div id="toast-container"></div>
+
+{% if users %}
+<div class="user-grid">
+    {% for user in users %}
+    <div class="user-card" id="card-{{ user.id }}">
+        <div class="user-card-header">
+            <span class="username">{{ user.username }}</span>
+            {% if user.enabled %}
+            <span><span class="status-dot active"></span> 启用</span>
+            {% else %}
+            <span style="color:var(--text-muted)"><span class="status-dot inactive"></span> 禁用</span>
+            {% endif %}
+        </div>
+
+        <div class="user-card-meta">
+            {% if user.email %}
+            <div class="meta-item">
+                <span class="meta-label">邮箱</span>
+                <span>{{ user.email }}</span>
+            </div>
+            {% endif %}
+            {% if user.principal %}
+            <div class="meta-item">
+                <span class="meta-label">密保</span>
+                <span>已配置</span>
+            </div>
+            {% endif %}
+            {% set last_log = user.last_log() %}
+            {% if last_log %}
+            <div class="meta-item">
+                <span class="meta-label">最近</span>
+                {% if last_log.status == 'success' %}
+                <span style="color:var(--success)">✓ {{ last_log.message[:30] }}</span>
+                {% else %}
+                <span style="color:var(--danger)">✗ {{ last_log.message[:30] }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="user-card-times">
+            {% for t in user.get_cron_times() %}
+            <span class="time-tag">{{ t }}</span>
+            {% endfor %}
+        </div>
+
+        <div class="user-card-actions">
+            <a href="{{ url_for('users.user_edit', user_id=user.id) }}" class="btn btn-ghost btn-sm">编辑</a>
+            <button class="btn btn-test btn-sm" onclick="runTest({{ user.id }}, '{{ user.username }}')">测试</button>
+            <form method="POST" action="{{ url_for('users.user_toggle', user_id=user.id) }}">
+                {% if user.enabled %}
+                <button class="btn btn-ghost btn-sm">禁用</button>
+                {% else %}
+                <button class="btn btn-ghost btn-sm" style="color:var(--success);border-color:rgba(52,211,153,0.3);">启用</button>
+                {% endif %}
+            </form>
+            <form method="POST" action="{{ url_for('users.user_delete', user_id=user.id) }}"
+                  onsubmit="return confirm('确定删除用户 {{ user.username }}？')">
+                <button class="btn btn-danger-ghost btn-sm">删除</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">👤</div>
+    <p>还没有添加用户</p>
+    <a href="{{ url_for('users.user_new') }}" class="btn btn-accent">添加第一个用户</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+async function runTest(userId, username) {
+    if (!confirm('立即测试 ' + username + ' 的查寝？')) return;
+
+    const card = document.getElementById('card-' + userId);
+    const btn = card.querySelector('.btn-test');
+    const origText = btn.textContent;
+    btn.textContent = '测试中…';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    try {
+        const resp = await fetch('/users/' + userId + '/test', { method: 'POST' });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            showToast(username + ' 测试成功: ' + data.message, 'success');
+        } else {
+            showToast(username + ' 测试失败: ' + data.message, 'danger');
+        }
+    } catch (e) {
+        showToast('请求异常: ' + e.message, 'danger');
+    } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+</script>
+{% endblock %}

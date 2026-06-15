@@ -1,0 +1,632 @@
+/* ===== 查寝管理系统 — 深夜主题 ===== */
+
+/* ---------- 基础变量 ---------- */
+:root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d27;
+    --bg-card: #222533;
+    --bg-input: #2a2d3a;
+    --border: #2e3245;
+    --text-primary: #e8e9ed;
+    --text-secondary: #9498a8;
+    --text-muted: #5c6078;
+    --accent: #f0a030;
+    --accent-hover: #f5b548;
+    --accent-glow: rgba(240, 160, 48, 0.15);
+    --success: #34d399;
+    --danger: #f87171;
+    --info: #60a5fa;
+    --sidebar-width: 220px;
+}
+
+/* ---------- 全局 ---------- */
+* { box-sizing: border-box; }
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.app-layout {
+    display: flex;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); }
+
+/* ---------- 侧边栏 ---------- */
+.sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-brand {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+}
+
+.sidebar-brand h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-brand .brand-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 8px 0;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.sidebar-nav a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: var(--accent-glow);
+}
+
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-footer a {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* ---------- 主内容区 ---------- */
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    padding: 32px 40px;
+    min-height: 100vh;
+}
+
+/* ---------- 页面标题 ---------- */
+.page-header {
+    margin-bottom: 28px;
+}
+
+.page-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--text-primary);
+}
+
+.page-header p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* ---------- 提示消息 ---------- */
+.alert {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background: rgba(52, 211, 153, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.alert-danger {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--danger);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+.alert .btn-close {
+    filter: invert(1);
+    opacity: 0.4;
+}
+
+/* ---------- 卡片 ---------- */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.card-body { padding: 20px; }
+
+/* ---------- 用户卡片网格 ---------- */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+}
+
+.user-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s;
+}
+
+.user-card:hover {
+    border-color: var(--accent);
+}
+
+.user-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.user-card-header .username {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.user-card-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.user-card-meta .meta-label {
+    color: var(--text-muted);
+    min-width: 52px;
+}
+
+.user-card-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.time-tag {
+    background: var(--accent-glow);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid rgba(240, 160, 48, 0.2);
+}
+
+.user-card-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.user-card-actions form { display: inline; }
+
+/* ---------- 状态标签 ---------- */
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.status-dot.active {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.status-dot.inactive {
+    background: var(--text-muted);
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-accent {
+    background: var(--accent);
+    color: #000;
+}
+
+.btn-accent:hover {
+    background: var(--accent-hover);
+    color: #000;
+    box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.btn-danger-ghost {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.btn-danger-ghost:hover {
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.btn-test {
+    background: transparent;
+    color: var(--info);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.btn-test:hover {
+    background: rgba(96, 165, 250, 0.1);
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.btn-full {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* ---------- 表单 ---------- */
+.form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.form-control, .form-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.form-control:focus, .form-select:focus {
+    background: var(--bg-input);
+    border-color: var(--accent);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.form-control::placeholder { color: var(--text-muted); }
+
+.form-text { color: var(--text-muted); font-size: 12px; }
+
+.form-check-input {
+    background-color: var(--bg-input);
+    border-color: var(--border);
+}
+
+.form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.form-check-label { color: var(--text-secondary); font-size: 14px; }
+
+/* ---------- 表格 ---------- */
+.table {
+    color: var(--text-primary);
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px;
+    white-space: nowrap;
+}
+
+.table tbody td {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 14px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ---------- 徽章 ---------- */
+.badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.badge-success {
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--success);
+}
+
+.badge-danger {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--danger);
+}
+
+/* ---------- 分页 ---------- */
+.pagination { gap: 4px; }
+
+.page-link {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.page-link:hover {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+.page-item.active .page-link {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+}
+
+/* ---------- 登录页 ---------- */
+.login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    background: var(--bg-primary);
+}
+
+.login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+}
+
+.login-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.login-card .login-sub {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+}
+
+/* ---------- 空状态 ---------- */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+/* ---------- 筛选栏 ---------- */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.filter-bar .form-select {
+    min-width: 160px;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main-content { margin-left: 0; padding: 20px; }
+    .user-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------- 日志时间线 ---------- */
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.log-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.15s;
+}
+
+.log-item:hover {
+    border-color: var(--text-muted);
+}
+
+.log-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.log-success .log-indicator {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+}
+
+.log-failure .log-indicator {
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.4);
+}
+
+.log-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.log-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.log-user {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.log-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.log-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.log-success .log-message { color: var(--success); }
+.log-failure .log-message { color: var(--danger); }
+
+/* ---------- Toast 通知 ---------- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    max-width: 420px;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: all 0.3s ease;
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-success {
+    background: rgba(22, 163, 74, 0.95);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3);
+}
+
+.toast-danger {
+    background: rgba(220, 38, 38, 0.95);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}登录 - 查寝管理系统{% endblock %}
+
+{% block fullpage %}
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2><span class="brand-dot" style="width:10px;height:10px;display:inline-block;background:var(--accent);border-radius:50%;margin-right:8px;box-shadow:0 0 10px var(--accent);vertical-align:middle;"></span>查寝管理系统</h2>
+        <p class="login-sub">请输入管理员密码</p>
+        <form method="POST">
+            <div style="margin-bottom:20px;">
+                <input type="password" class="form-control" id="password" name="password"
+                       placeholder="管理员密码" required autofocus>
+            </div>
+            <button type="submit" class="btn btn-accent btn-full">登录</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

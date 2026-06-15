@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}查寝管理系统{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body{% if current_user.is_authenticated %} class="app-layout"{% endif %}>
+    {% if current_user.is_authenticated %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h1><span class="brand-dot"></span>查寝管理</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('users.user_list') }}" class="{{ 'active' if request.endpoint and 'users' in request.endpoint }}">
+                <span>👤</span> 用户管理
+            </a>
+            <a href="{{ url_for('logs.log_list') }}" class="{{ 'active' if request.endpoint and 'logs' in request.endpoint }}">
+                <span>📋</span> 执行日志
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}">⏻ 退出登录</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+    {% else %}
+    {% block fullpage %}{% endblock %}
+    {% endif %}
+
+    <script>
+    document.querySelectorAll('.btn-close').forEach(btn => {
+        btn.addEventListener('click', () => btn.parentElement.remove());
+    });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

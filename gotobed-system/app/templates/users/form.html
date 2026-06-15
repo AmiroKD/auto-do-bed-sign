@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑' if user else '新增' }}用户 - 查寝管理系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ '编辑' if user else '新增' }}用户</h2>
+    <p>{{ '修改用户信息和打卡时间' if user else '添加新的查寝账号' }}</p>
+</div>
+
+<div class="card" style="max-width:560px;">
+    <div class="card-body">
+        <form method="POST">
+            <div style="margin-bottom:16px;">
+                <label class="form-label">学工账号 <span style="color:var(--danger)">*</span></label>
+                <input type="text" class="form-control" name="username"
+                       value="{{ user.username if user else '' }}" required placeholder="学工平台用户名">
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label class="form-label">密码 {% if not user %}<span style="color:var(--danger)">*</span>{% endif %}</label>
+                <input type="password" class="form-control" name="password"
+                       {{ 'required' if not user else '' }} placeholder="{{ '留空表示不修改' if user else '学工平台密码' }}">
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label class="form-label">密保问题 <span style="color:var(--text-muted)">(选填)</span></label>
+                <input type="text" class="form-control" name="principal"
+                       value="{{ user.principal if user and user.principal else '' }}" placeholder="仅触发二次验证时需要">
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label class="form-label">密保答案 <span style="color:var(--text-muted)">(选填)</span></label>
+                <input type="text" class="form-control" name="credential"
+                       value="{{ user.credential if user and user.credential else '' }}" placeholder="密保问题的答案">
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label class="form-label">通知邮箱 <span style="color:var(--text-muted)">(选填)</span></label>
+                <input type="email" class="form-control" name="email"
+                       value="{{ user.email if user and user.email else '' }}" placeholder="查寝结果发送到此邮箱">
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label class="form-label">打卡时间 <span style="color:var(--danger)">*</span></label>
+                <p class="form-text" style="margin-bottom:10px;">可多选，系统会在每个选定时间自动查寝（北京时间）</p>
+                {% for expr, desc in presets.items() %}
+                <div class="form-check" style="margin-bottom:6px;">
+                    <input class="form-check-input" type="checkbox" name="cron_times"
+                           id="cron_{{ loop.index }}" value="{{ expr }}"
+                           {% if not user or expr in user.get_cron_times() %}checked{% endif %}>
+                    <label class="form-check-label" for="cron_{{ loop.index }}">
+                        {{ desc }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-check" style="margin-bottom:24px;">
+                <input class="form-check-input" type="checkbox" id="enabled" name="enabled"
+                       {{ 'checked' if not user or user.enabled else '' }}>
+                <label class="form-check-label" for="enabled">启用定时任务</label>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn btn-accent" style="flex:1;">保存</button>
+                <a href="{{ url_for('users.user_list') }}" class="btn btn-ghost" style="flex:1;text-align:center;">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
