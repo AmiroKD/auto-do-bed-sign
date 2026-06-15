@@ -41,7 +41,12 @@ def user_new():
             email=request.form.get('email', '').strip() or None,
             enabled='enabled' in request.form,
         )
-        user.set_cron_times(request.form.getlist('cron_times'))
+        valid_presets = set(CRON_PRESETS.keys())
+        cron_times = [t for t in request.form.getlist('cron_times') if t in valid_presets]
+        if not cron_times:
+            flash('请至少选择一个打卡时间', 'danger')
+            return render_template('users/form.html', presets=CRON_PRESETS, user=None)
+        user.set_cron_times(cron_times)
         db.session.add(user)
         db.session.commit()
 
@@ -72,7 +77,12 @@ def user_edit(user_id):
         user.principal = request.form.get('principal', '').strip() or None
         user.credential = request.form.get('credential', '').strip() or None
         user.email = request.form.get('email', '').strip() or None
-        user.set_cron_times(request.form.getlist('cron_times'))
+        valid_presets = set(CRON_PRESETS.keys())
+        cron_times = [t for t in request.form.getlist('cron_times') if t in valid_presets]
+        if not cron_times:
+            flash('请至少选择一个打卡时间', 'danger')
+            return render_template('users/form.html', presets=CRON_PRESETS, user=user)
+        user.set_cron_times(cron_times)
         user.enabled = 'enabled' in request.form
         db.session.commit()
 
