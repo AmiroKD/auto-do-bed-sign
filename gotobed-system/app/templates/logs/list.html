@@ -2,58 +2,43 @@
 {% block title %}执行日志 - 查寝管理系统{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>执行日志</h2>
-    <p>查看每次查寝的执行状态和结果</p>
-</div>
-
-<div class="filter-bar">
-    <form method="GET">
-        <select class="form-select" name="user_id" onchange="this.form.submit()">
-            <option value="">全部用户</option>
-            {% for u in users %}
-            <option value="{{ u.id }}" {% if selected_user_id == u.id %}selected{% endif %}>
-                {{ u.username }}
-            </option>
-            {% endfor %}
-        </select>
-    </form>
-</div>
-
-{% if logs %}
-<div class="card">
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>用户</th>
-                    <th>状态</th>
-                    <th>结果</th>
-                    <th>执行时间</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in logs %}
-                <tr>
-                    <td>{{ log.user.username }}</td>
-                    <td>
-                        {% if log.status == 'success' %}
-                        <span class="badge badge-success">成功</span>
-                        {% else %}
-                        <span class="badge badge-danger">失败</span>
-                        {% endif %}
-                    </td>
-                    <td style="max-width:300px;word-break:break-all;">{{ log.message }}</td>
-                    <td style="white-space:nowrap;">{{ log.executed_at.strftime('%m-%d %H:%M:%S') }}</td>
-                </tr>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+        <h2>执行日志</h2>
+        <p>查看每次查寝的执行状态和结果</p>
+    </div>
+    <div>
+        <form method="GET">
+            <select class="form-select" name="user_id" onchange="this.form.submit()">
+                <option value="">全部用户</option>
+                {% for u in users %}
+                <option value="{{ u.id }}" {% if selected_user_id == u.id %}selected{% endif %}>
+                    {{ u.username }}
+                </option>
                 {% endfor %}
-            </tbody>
-        </table>
+            </select>
+        </form>
     </div>
 </div>
 
+{% if logs %}
+<div class="log-list">
+    {% for log in logs %}
+    <div class="log-item {% if log.status == 'success' %}log-success{% else %}log-failure{% endif %}">
+        <div class="log-indicator"></div>
+        <div class="log-body">
+            <div class="log-top">
+                <span class="log-user">{{ log.user.username }}</span>
+                <span class="log-time">{{ log.executed_at.strftime('%m-%d %H:%M:%S') }}</span>
+            </div>
+            <div class="log-message">{{ log.message }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
 {% if pagination.pages > 1 %}
-<nav style="margin-top:16px;">
+<nav style="margin-top:24px;">
     <ul class="pagination">
         {% if pagination.has_prev %}
         <li class="page-item">

@@ -28,6 +28,9 @@ body {
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
     margin: 0;
     min-height: 100vh;
+}
+
+.app-layout {
     display: flex;
 }
 
@@ -448,18 +451,21 @@ a:hover { color: var(--accent-hover); }
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    margin-left: 0 !important;
+    width: 100vw;
+    height: 100vh;
     padding: 20px;
+    box-sizing: border-box;
+    background: var(--bg-primary);
 }
 
 .login-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 36px 32px;
+    padding: 40px 36px;
     width: 100%;
     max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
 .login-card h2 {
@@ -510,6 +516,80 @@ a:hover { color: var(--accent-hover); }
     .main-content { margin-left: 0; padding: 20px; }
     .user-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- 日志时间线 ---------- */
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.log-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.15s;
+}
+
+.log-item:hover {
+    border-color: var(--text-muted);
+}
+
+.log-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.log-success .log-indicator {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+}
+
+.log-failure .log-indicator {
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.4);
+}
+
+.log-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.log-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.log-user {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.log-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.log-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.log-success .log-message { color: var(--success); }
+.log-failure .log-message { color: var(--danger); }
 
 /* ---------- Toast 通知 ---------- */
 #toast-container {

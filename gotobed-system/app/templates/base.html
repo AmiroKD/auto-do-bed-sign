@@ -6,7 +6,7 @@
     <title>{% block title %}查寝管理系统{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body{% if current_user.is_authenticated %} class="app-layout"{% endif %}>
     {% if current_user.is_authenticated %}
     <aside class="sidebar">
         <div class="sidebar-brand">
