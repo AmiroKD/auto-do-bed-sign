@@ -10,10 +10,12 @@
     <a href="{{ url_for('users.user_new') }}" class="btn btn-accent">+ 新增用户</a>
 </div>
 
+<div id="toast-container"></div>
+
 {% if users %}
 <div class="user-grid">
     {% for user in users %}
-    <div class="user-card">
+    <div class="user-card" id="card-{{ user.id }}">
         <div class="user-card-header">
             <span class="username">{{ user.username }}</span>
             {% if user.enabled %}
@@ -57,10 +59,7 @@
 
         <div class="user-card-actions">
             <a href="{{ url_for('users.user_edit', user_id=user.id) }}" class="btn btn-ghost btn-sm">编辑</a>
-            <form method="POST" action="{{ url_for('users.user_test', user_id=user.id) }}"
-                  onsubmit="return confirm('立即测试 {{ user.username }} 的查寝？')">
-                <button class="btn btn-test btn-sm">测试</button>
-            </form>
+            <button class="btn btn-test btn-sm" onclick="runTest({{ user.id }}, '{{ user.username }}')">测试</button>
             <form method="POST" action="{{ url_for('users.user_toggle', user_id=user.id) }}">
                 {% if user.enabled %}
                 <button class="btn btn-ghost btn-sm">禁用</button>
@@ -83,4 +82,48 @@
     <a href="{{ url_for('users.user_new') }}" class="btn btn-accent">添加第一个用户</a>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+async function runTest(userId, username) {
+    if (!confirm('立即测试 ' + username + ' 的查寝？')) return;
+
+    const card = document.getElementById('card-' + userId);
+    const btn = card.querySelector('.btn-test');
+    const origText = btn.textContent;
+    btn.textContent = '测试中…';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    try {
+        const resp = await fetch('/users/' + userId + '/test', { method: 'POST' });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            showToast(username + ' 测试成功: ' + data.message, 'success');
+        } else {
+            showToast(username + ' 测试失败: ' + data.message, 'danger');
+        }
+    } catch (e) {
+        showToast('请求异常: ' + e.message, 'danger');
+    } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+</script>
 {% endblock %}
