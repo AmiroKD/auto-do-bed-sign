@@ -10,8 +10,8 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
 
-    # 数据目录
-    data_dir = os.path.join(app.root_path, 'data')
+    # 数据目录（使用项目根目录，确保 Docker volume 挂载生效）
+    data_dir = os.path.join(os.path.dirname(app.root_path), 'data')
     os.makedirs(data_dir, exist_ok=True)
 
     # 加载配置
