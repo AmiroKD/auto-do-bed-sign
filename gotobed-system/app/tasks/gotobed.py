@@ -61,9 +61,11 @@ def _custom_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
 # 替换系统的 DNS 解析函数
 socket.getaddrinfo = _custom_getaddrinfo
 
-# 加载 JS 加密脚本
-_js_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'gzlg助手', 'g5116.js')
-_js_path = os.path.normpath(_js_path)
+# 加载 JS 加密脚本（Docker 内中文路径会乱码，优先用英文路径）
+_js_dir = os.path.dirname(__file__)
+_js_path_simple = os.path.normpath(os.path.join(_js_dir, '..', '..', 'g5116.js'))
+_js_path_original = os.path.normpath(os.path.join(_js_dir, '..', '..', '..', 'gzlg助手', 'g5116.js'))
+_js_path = _js_path_simple if os.path.exists(_js_path_simple) else _js_path_original
 with open(_js_path, 'r', encoding='utf-8') as f:
     _js_code = f.read()
 _ctx = execjs.compile(_js_code)

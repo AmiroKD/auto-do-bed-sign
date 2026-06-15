@@ -14,8 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制管理系统代码
 COPY gotobed-system/ .
 
-# 复制原脚本的 JS 文件（密码加密依赖）
-COPY "gzlg助手/g5116.js" ./gzlg助手/g5116.js
+# 复制原脚本的 JS 文件（密码加密依赖）— 使用英文路径避免编码问题
+COPY "gzlg助手/g5116.js" ./g5116.js
 
 # 创建数据目录
 RUN mkdir -p /app/data
