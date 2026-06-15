@@ -57,7 +57,7 @@ def _cleanup_old_logs():
         return
 
     with _app.app_context():
-        cutoff = datetime.now(_BJ_TZ) - timedelta(days=5)
+        cutoff = datetime.now(_BJ_TZ).replace(tzinfo=None) - timedelta(days=5)
         count = Log.query.filter(Log.executed_at < cutoff).delete()
         db.session.commit()
         if count > 0:

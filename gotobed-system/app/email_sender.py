@@ -1,15 +1,20 @@
 import smtplib
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from email.mime.text import MIMEText
 
-import pytz
 from flask import current_app
+
+# 北京时间 UTC+8
+_BJ_TZ = timezone(timedelta(hours=8))
+
+# 中文星期映射
+_WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
 
 def get_beijing_time():
-    beijing_zone = pytz.timezone('Asia/Shanghai')
-    beijing_time = datetime.now(beijing_zone)
-    return beijing_time.strftime('%Y-%m-%d %A %H:%M')
+    now = datetime.now(_BJ_TZ)
+    weekday = _WEEKDAYS[now.weekday()]
+    return now.strftime(f'%Y-%m-%d {weekday} %H:%M')
 
 
 def send_email(subject: str, content: str, to_address: str):
