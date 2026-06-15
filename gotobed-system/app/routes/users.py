@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required
+import re
 
 from ..models import db, User
 from ..crypto import encrypt_password
@@ -14,6 +15,36 @@ CRON_PRESETS = {
     '10 22 * * *': '每天 22:10（北京时间）',
     '30 22 * * *': '每天 22:30（北京时间）',
 }
+
+
+def _validate_cron_time(expr: str) -> bool:
+    """验证 cron 表达式格式：分 时 * * *（0-59 0-23）"""
+    m = re.match(r'^(\d{1,2}) (\d{1,2}) \* \* \*$', expr.strip())
+    if not m:
+        return False
+    minute, hour = int(m.group(1)), int(m.group(2))
+    return 0 <= minute <= 59 and 0 <= hour <= 23
+
+
+def _parse_cron_times(form) -> list:
+    """从表单解析所有打卡时间（预设 + 自定义）"""
+    times = form.getlist('cron_times')
+    custom = form.get('custom_time', '').strip()
+    if custom:
+        # 自定义时间格式 HH:MM -> cron 表达式
+        match = re.match(r'^(\d{1,2}):(\d{2})$', custom)
+        if match:
+            h, m = match.group(1), match.group(2)
+            times.append(f'{m} {h} * * *')
+    # 去重 + 验证
+    valid = []
+    seen = set()
+    for t in times:
+        t = t.strip()
+        if t not in seen and _validate_cron_time(t):
+            valid.append(t)
+            seen.add(t)
+    return valid
 
 
 @users_bp.route('/')
@@ -41,8 +72,7 @@ def user_new():
             email=request.form.get('email', '').strip() or None,
             enabled='enabled' in request.form,
         )
-        valid_presets = set(CRON_PRESETS.keys())
-        cron_times = [t for t in request.form.getlist('cron_times') if t in valid_presets]
+        cron_times = _parse_cron_times(request.form)
         if not cron_times:
             flash('请至少选择一个打卡时间', 'danger')
             return render_template('users/form.html', presets=CRON_PRESETS, user=None)
@@ -77,8 +107,7 @@ def user_edit(user_id):
         user.principal = request.form.get('principal', '').strip() or None
         user.credential = request.form.get('credential', '').strip() or None
         user.email = request.form.get('email', '').strip() or None
-        valid_presets = set(CRON_PRESETS.keys())
-        cron_times = [t for t in request.form.getlist('cron_times') if t in valid_presets]
+        cron_times = _parse_cron_times(request.form)
         if not cron_times:
             flash('请至少选择一个打卡时间', 'danger')
             return render_template('users/form.html', presets=CRON_PRESETS, user=user)

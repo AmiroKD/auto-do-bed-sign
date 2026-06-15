@@ -53,6 +53,28 @@
                     </label>
                 </div>
                 {% endfor %}
+
+                {# 显示已有但不在预设中的自定义时间 #}
+                {% if user %}
+                {% for t in user.get_cron_times() %}
+                {% if t not in presets %}
+                <div class="form-check" style="margin-bottom:6px;">
+                    <input class="form-check-input" type="checkbox" name="cron_times"
+                           id="cron_custom_{{ loop.index }}" value="{{ t }}" checked>
+                    <label class="form-check-label" for="cron_custom_{{ loop.index }}">
+                        自定义 {{ t.split()[1] }}:{{ t.split()[0].zfill(2) }}
+                    </label>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+
+                <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+                    <input type="time" class="form-control" id="custom_time" name="custom_time"
+                           style="width:140px;" placeholder="HH:MM">
+                    <span class="form-text" style="margin:0;">选择自定义时间（北京时间）</span>
+                </div>
+                <p class="form-text">不选自定义时间则留空，选了预设+自定义会合并去重</p>
             </div>
 
             <div class="form-check" style="margin-bottom:24px;">
