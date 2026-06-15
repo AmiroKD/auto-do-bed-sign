@@ -135,6 +135,7 @@ def user_test(user_id):
         password=password,
         principal=user.principal,
         credential=user.credential,
+        email=user.email,
     )
 
     # 记录日志
