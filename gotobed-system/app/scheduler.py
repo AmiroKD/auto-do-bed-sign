@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -7,6 +8,8 @@ logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler(timezone='Asia/Shanghai')
 _jobs = {}  # user_id -> [job_id1, job_id2, ...]  一个用户可有多个定时任务
 _app = None  # 保存 app 引用
+
+_BJ_TZ = timezone(timedelta(hours=8))
 
 
 def _execute_gotobed(user_id: int):
@@ -43,6 +46,22 @@ def _execute_gotobed(user_id: int):
         db.session.add(log)
         db.session.commit()
         logger.info(f'用户 {user.username} 查寝完成: {result["status"]}')
+
+
+def _cleanup_old_logs():
+    """清理 5 天前的执行日志"""
+    from .models import db, Log
+
+    if _app is None:
+        logger.error('Flask app 未初始化')
+        return
+
+    with _app.app_context():
+        cutoff = datetime.now(_BJ_TZ) - timedelta(days=5)
+        count = Log.query.filter(Log.executed_at < cutoff).delete()
+        db.session.commit()
+        if count > 0:
+            logger.info(f'已清理 {count} 条过期日志（{cutoff.strftime("%Y-%m-%d %H:%M")} 之前）')
 
 
 def add_user_job(user):
@@ -95,6 +114,14 @@ def init_scheduler(app):
         users = User.query.filter_by(enabled=True).all()
         for user in users:
             add_user_job(user)
+
+    # 每天凌晨 4 点清理 5 天前的日志
+    scheduler.add_job(
+        _cleanup_old_logs,
+        trigger=CronTrigger(hour=4, minute=0, timezone='Asia/Shanghai'),
+        id='cleanup_old_logs',
+        replace_existing=True,
+    )
 
     scheduler.start()
     logger.info(f'调度器已启动，共加载 {len(users)} 个用户任务')
