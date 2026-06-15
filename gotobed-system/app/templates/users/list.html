@@ -2,83 +2,85 @@
 {% block title %}用户管理 - 查寝管理系统{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>用户管理</h4>
-    <a href="{{ url_for('users.user_new') }}" class="btn btn-primary">+ 新增用户</a>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+        <h2>用户管理</h2>
+        <p>管理查寝账号和定时任务</p>
+    </div>
+    <a href="{{ url_for('users.user_new') }}" class="btn btn-accent">+ 新增用户</a>
 </div>
 
 {% if users %}
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>账号</th>
-                <th>邮箱</th>
-                <th>打卡时间</th>
-                <th>状态</th>
-                <th>最近日志</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email or '-' }}</td>
-                <td>
-                    {% for t in user.get_cron_times() %}
-                    <code class="d-inline-block me-1">{{ t }}</code>
-                    {% endfor %}
-                </td>
-                <td>
-                    {% if user.enabled %}
-                    <span class="badge bg-success">启用</span>
-                    {% else %}
-                    <span class="badge bg-secondary">禁用</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% set last_log = user.last_log() %}
-                    {% if last_log %}
-                        {% if last_log.status == 'success' %}
-                        <span class="text-success">✅ {{ last_log.message[:20] }}</span>
-                        {% else %}
-                        <span class="text-danger">❌ {{ last_log.message[:20] }}</span>
-                        {% endif %}
-                    {% else %}
-                    <span class="text-muted">-</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{{ url_for('users.user_edit', user_id=user.id) }}"
-                       class="btn btn-sm btn-outline-primary">编辑</a>
-                    <form method="POST" action="{{ url_for('users.user_test', user_id=user.id) }}"
-                          style="display:inline"
-                          onsubmit="return confirm('立即测试 {{ user.username }} 的查寝？')">
-                        <button class="btn btn-sm btn-outline-info">测试</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('users.user_toggle', user_id=user.id) }}"
-                          style="display:inline">
-                        {% if user.enabled %}
-                        <button class="btn btn-sm btn-outline-warning">禁用</button>
-                        {% else %}
-                        <button class="btn btn-sm btn-outline-success">启用</button>
-                        {% endif %}
-                    </form>
-                    <form method="POST" action="{{ url_for('users.user_delete', user_id=user.id) }}"
-                          style="display:inline"
-                          onsubmit="return confirm('确定删除用户 {{ user.username }}？')">
-                        <button class="btn btn-sm btn-outline-danger">删除</button>
-                    </form>
-                </td>
-            </tr>
+<div class="user-grid">
+    {% for user in users %}
+    <div class="user-card">
+        <div class="user-card-header">
+            <span class="username">{{ user.username }}</span>
+            {% if user.enabled %}
+            <span><span class="status-dot active"></span> 启用</span>
+            {% else %}
+            <span style="color:var(--text-muted)"><span class="status-dot inactive"></span> 禁用</span>
+            {% endif %}
+        </div>
+
+        <div class="user-card-meta">
+            {% if user.email %}
+            <div class="meta-item">
+                <span class="meta-label">邮箱</span>
+                <span>{{ user.email }}</span>
+            </div>
+            {% endif %}
+            {% if user.principal %}
+            <div class="meta-item">
+                <span class="meta-label">密保</span>
+                <span>已配置</span>
+            </div>
+            {% endif %}
+            {% set last_log = user.last_log() %}
+            {% if last_log %}
+            <div class="meta-item">
+                <span class="meta-label">最近</span>
+                {% if last_log.status == 'success' %}
+                <span style="color:var(--success)">✓ {{ last_log.message[:30] }}</span>
+                {% else %}
+                <span style="color:var(--danger)">✗ {{ last_log.message[:30] }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="user-card-times">
+            {% for t in user.get_cron_times() %}
+            <span class="time-tag">{{ t }}</span>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+
+        <div class="user-card-actions">
+            <a href="{{ url_for('users.user_edit', user_id=user.id) }}" class="btn btn-ghost btn-sm">编辑</a>
+            <form method="POST" action="{{ url_for('users.user_test', user_id=user.id) }}"
+                  onsubmit="return confirm('立即测试 {{ user.username }} 的查寝？')">
+                <button class="btn btn-test btn-sm">测试</button>
+            </form>
+            <form method="POST" action="{{ url_for('users.user_toggle', user_id=user.id) }}">
+                {% if user.enabled %}
+                <button class="btn btn-ghost btn-sm">禁用</button>
+                {% else %}
+                <button class="btn btn-ghost btn-sm" style="color:var(--success);border-color:rgba(52,211,153,0.3);">启用</button>
+                {% endif %}
+            </form>
+            <form method="POST" action="{{ url_for('users.user_delete', user_id=user.id) }}"
+                  onsubmit="return confirm('确定删除用户 {{ user.username }}？')">
+                <button class="btn btn-danger-ghost btn-sm">删除</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% else %}
-<div class="text-center text-muted py-5">
-    <p>暂无用户，点击上方按钮新增</p>
+<div class="empty-state">
+    <div class="empty-icon">👤</div>
+    <p>还没有添加用户</p>
+    <a href="{{ url_for('users.user_new') }}" class="btn btn-accent">添加第一个用户</a>
 </div>
 {% endif %}
 {% endblock %}

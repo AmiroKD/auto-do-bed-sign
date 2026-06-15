@@ -4,26 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}查寝管理系统{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
-          crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">查寝管理系统</a>
-            {% if current_user.is_authenticated %}
-            <div class="navbar-nav">
-                <a class="nav-link" href="{{ url_for('users.user_list') }}">用户管理</a>
-                <a class="nav-link" href="{{ url_for('logs.log_list') }}">执行日志</a>
-                <a class="nav-link" href="{{ url_for('auth.logout') }}">退出</a>
-            </div>
-            {% endif %}
+    {% if current_user.is_authenticated %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h1><span class="brand-dot"></span>查寝管理</h1>
         </div>
-    </nav>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('users.user_list') }}" class="{{ 'active' if request.endpoint and 'users' in request.endpoint }}">
+                <span>👤</span> 用户管理
+            </a>
+            <a href="{{ url_for('logs.log_list') }}" class="{{ 'active' if request.endpoint and 'logs' in request.endpoint }}">
+                <span>📋</span> 执行日志
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}">⏻ 退出登录</a>
+        </div>
+    </aside>
 
-    <div class="container mt-4">
+    <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -36,11 +38,16 @@
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </div>
+    </main>
+    {% else %}
+    {% block fullpage %}{% endblock %}
+    {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
-            crossorigin="anonymous"></script>
+    <script>
+    document.querySelectorAll('.btn-close').forEach(btn => {
+        btn.addEventListener('click', () => btn.parentElement.remove());
+    });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
